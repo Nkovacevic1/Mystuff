@@ -7,12 +7,15 @@ clock = pygame.time.Clock()
 font = pygame.font.Font(None, 90)
 guess_font = pygame.font.Font(None, 60)
 title_font = pygame.font.Font(None, 50)
+correct_sound = pygame.mixer.Sound("correct.wav")   # load once, before the loop
 title = title_font.render("Guess the word!", True, (255, 255, 255))
 word_to_guess = "HELLO"
 user_text = ""
 results=[]
 guesses = []
 count=5 # list of remaining guesses
+right_guess=False
+sound_played = False  # flag to track if the sound has been played
 remain=True
 count_surface = guess_font.render("Guesses remaining: " + str(count), True, (255, 255, 255))
 while remain:
@@ -37,8 +40,10 @@ while remain:
                                 colors.append((255, 0, 0))  # red
                         else:
                             colors.append((255, 0, 0))  # red for extra letters
-                    guesses.append((user_text, colors))   # <-- add to it here
-                    user_text = ""                # clear after Enter
+                    guesses.append((user_text, colors))   # <-- add to it here             
+                    if user_text.upper() == word_to_guess:
+                        right_guess = True
+                    user_text = ""  
             else:
                 user_text += event.unicode      # add the typed character
     screen.fill("blue")
@@ -52,15 +57,26 @@ while remain:
             pygame.draw.rect(screen, color, (200 + j * 60, 200 + i * 60, 50, 57))
             letter_surface = font.render(guess[j].upper(), True, "black")
             screen.blit(letter_surface, (200 + j * 60, 200 + i * 60))
-    if count==0:  # if no guesses left
-                panel = pygame.Surface((400, 400))  # create a panel surface
-                panel.fill((200, 40, 40))
-                game_over_font = pygame.font.Font(None, 40)
-                game_over_text = game_over_font.render("Game Over!", True, (255, 255, 255))
-                panel.blit(game_over_text, game_over_text.get_rect(center=(panel.get_width() // 2, 80)))  # center the text horizontally
-                correct_word_text = game_over_font.render(f"The correct word was: {word_to_guess.upper()}", True, (255, 255, 255))
-                panel.blit(correct_word_text, correct_word_text.get_rect(center=(panel.get_width() // 2, 160)))  # center the text horizontally
-                screen.blit(panel, panel.get_rect(center=screen.get_rect().center))        
-    pygame.display.flip()  
+    if right_guess:
+        panel = pygame.Surface((400, 400))  # create a panel surface
+        panel.fill((40, 200, 40))
+        game_won_font = pygame.font.Font(None, 40)
+        game_won_text = game_won_font.render("You won!", True, (255, 0, 255))
+        panel.blit(game_won_text, game_won_text.get_rect(center=(panel.get_width() // 2, 80)))  # center the text horizontally
+        screen.blit(panel, panel.get_rect(center=screen.get_rect().center))
+        if not sound_played:
+            correct_sound.play()  # play the sound when the player wins
+            sound_played = True
+        
+    elif count == 0:  # if no guesses left
+        panel = pygame.Surface((400, 400))  # create a panel surface
+        panel.fill((200, 40, 40))
+        game_over_font = pygame.font.Font(None, 40)
+        game_over_text = game_over_font.render("Game Over!", True, (255, 255, 255))
+        panel.blit(game_over_text, game_over_text.get_rect(center=(panel.get_width() // 2, 80)))  # center the text horizontally
+        correct_word_text = game_over_font.render(f"The correct word was: {word_to_guess.upper()}", True, (255, 255, 255))
+        panel.blit(correct_word_text, correct_word_text.get_rect(center=(panel.get_width() // 2, 160)))  # center the text horizontally
+        screen.blit(panel, panel.get_rect(center=screen.get_rect().center))
+    pygame.display.flip()
     clock.tick(60)
 pygame.quit()
